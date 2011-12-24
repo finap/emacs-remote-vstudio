@@ -1,4 +1,4 @@
-;;; remote-vstudio.el -- Remote controll Visual Studio
+;;; rc-vstudio.el -- Remote controll Visual Studio
 
 ;; Copyright (C) 2011 FINAP
 
@@ -20,7 +20,7 @@
 
 
 (defvar vstudio-remote-exe-name "visual_studio_hidemaru.exe"
-  "Remote controll visual studio program filename")
+  "Remote controll program to visual studio file name")
 (defvar current-vstudio-proj-pid nil
   "Current editing visual studio project process id")
 (defvar current-vstudio-proj-absolute-path ""
@@ -43,7 +43,12 @@
 ;;
 (defun cmd-vstudio (vsfunc)
   "command"
-  (shell-command-to-string (concat vstudio-remote-exe-name " " vsfunc))
+  (shell-command-to-string (concat vstudio-remote-exe-name " " vsfunc "&"))
+)
+
+(defun cmd-vstudio-return-number (vsfunc)
+  "command"
+  (shell-command (concat vstudio-remote-exe-name " " vsfunc))
 )
 
 ;;
@@ -164,6 +169,14 @@
   )
 
 
+;;
+;; check
+;;
+(defun vstudio-proj-check-for-build (pid)
+  "solution debug stop"
+  (cmd-vstudio-return-number (concat "_check_for_build" " " pid))
+  )
+
 
 ;;
 ;; compile
@@ -187,7 +200,7 @@
 
 (defun clean-vstudio-proj (pid)
   "solution clean"
-  (cmd-vstudio (concat "cmd_clean" " " pid))
+  (cmd-vstudio (concat "cmd_solution_clean" " " pid))
   )
 
 
@@ -198,8 +211,8 @@
 
 (defun string-vstudio-output-console (pid)
   "output string"
-  (set-buffer (get-vstudio-buffer))
-  (insert (cmd-vstudio (concat "cmd_output_console" " " pid)))
+;  (set-buffer (get-vstudio-buffer))
+  (cmd-vstudio (concat "cmd_output_console" " " pid))
   )
 
 (defun start-debug-vstudio-proj (pid)
@@ -229,32 +242,88 @@
 
 
 ;;;
+;;;
 ;;; interactive
 ;;;
-(defun vstudio-compile ()
-  "current"
-  (interactive)
-  (compile-vstudio-file (buffer-file-name))
-  )
+;;;
 
+;; output
+;;
 
-(defun vstudio-build ()
-  "current"
-  (interactive)
-  (build-vstudio-proj current-vstudio-proj-pid)
-  )
-
-
-(defun vstudio-debug ()
-  "debug"
-  (interactive)
-  (start-debug-vstudio-proj current-vstudio-proj-pid)
-  )
-
+;; 
 (defun string-current-vstudio-output-console ()
   "output string"
   (interactive)
   (string-vstudio-output-console current-vstudio-proj-pid)
+  )
+
+(defun vstudio-current-output-console ()
+  "output string"
+  (interactive)
+  (setq buf (get-buffer-create "*compile*"))
+     (setq timer-temp-vs
+	   (run-with-timer 1 1
+			   (lambda ()
+			     (with-output-to-temp-buffer "*compile*"
+			       (princ (string-current-vstudio-output-console))
+			       )
+			     )
+			   )
+	   )
+     (while (eq 1 (vstudio-proj-check-for-build current-vstudio-proj-pid))
+       (sit-for 1)
+       )
+     (cancel-timer timer-temp-vs)
+     (princ (string-current-vstudio-output-console))
+  )
+
+;; compile
+;;
+(defun vstudio-compile ()
+  "visual studio compile solution current file"
+  (interactive)
+  (compile-vstudio-file (buffer-file-name))
+  )
+
+;; build
+(defun vstudio-build ()
+  "visual studio build solution" 
+  (interactive)
+  (build-vstudio-proj current-vstudio-proj-pid)
+  )
+
+;; rebuild
+(defun vstudio-rebuild ()
+  "visual studio rebuild solution"
+  (interactive)
+  (rebuild-vstudio-proj current-vstudio-proj-pid)
+ ; (vstudio-current-output-console)
+  )
+
+(defun vstudio-clean ()
+  "visual studio clean solution"
+  (interactive)
+  (clean-vstudio-proj current-vstudio-proj-pid)
+  )
+
+;; debug
+(defun vstudio-debug ()
+  "visual studio debug solution"
+  (interactive)
+  (start-debug-vstudio-proj current-vstudio-proj-pid)
+  )
+
+(defun vstudio-run ()
+  "visual studio no debug solution"
+  (interactive)
+  (run-vstudio-proj current-vstudio-proj-pid)
+  )
+
+
+(defun vstudio-activate ()
+  "activate visual studio window"
+  (interactive)
+  (active-vstudio-window-pid current-vstudio-proj-pid)
   )
 
 
@@ -313,10 +382,10 @@
 )
 
 (defun vstudio-select ()
-  ""
+  "select visual studio solution"
   (interactive)
   (if (<= (running-vstudio-project-number) 0)
-      (error "visual studio not running"))
+      (error "visual studio is not running"))
   (let ((num 0))
     (switch-to-buffer "*vstudio list*")
     (setq truncate-line t)
@@ -324,11 +393,11 @@
     (while (> (running-vstudio-project-number) num)
       (setq f (vstudio-project-absolute-path num))
       (insert f)	;path
-      (move-to-column 128 t)
+      (move-to-column (+ (length f) 2) t)
       (setq pid (vstudio-project-pid num))
       (cond 
        ((equal pid current-vstudio-proj-pid)
-	(insert "<current project>"))
+	(insert "* current project *"))
        (t
 	(insert "<non current>"))
        )				;cond
@@ -345,4 +414,4 @@
 )
 
 
-(provide 'remote-vstudio)
+(provide 'rc-vstudio)
