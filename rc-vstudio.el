@@ -3,7 +3,9 @@
 ;; Copyright (C) 2011 FINAP
 
 ;; Version: 0.1
-;; Author: FINAP
+;; Author: FINAP(http://finap.blog49.fc2.com/)
+;;
+;; download site <https://github.com/finap/emacs-remote-vstudio>
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -178,62 +180,18 @@
   )
 
 
-;;
-;; compile
-;; 
-(defun compile-vstudio-file (filename)
-  "compile source code vc-compiler"
-  (cmd-vstudio (concat "cmd_te_file_compile" " " (replace-file-path-space filename)))
-  )
 
 
-(defun build-vstudio-proj (pid)
-  "solution build"
-  (cmd-vstudio (concat "cmd_solution_build" " " pid))
-  )
-
-(defun rebuild-vstudio-proj (pid)
-  "solution rebuild"
-  (cmd-vstudio (concat "cmd_solution_rebuild" " " pid))
-  )
-
-
-(defun clean-vstudio-proj (pid)
-  "solution clean"
-  (cmd-vstudio (concat "cmd_solution_clean" " " pid))
-  )
-
-
-(defun active-vstudio-window-pid (pid)
-  "test"
-  (cmd-vstudio (concat "cmd_activate" " " pid))
-  )
-
-(defun string-vstudio-output-console (pid)
+(defun string-vstudio-pid-output-console (pid)
   "output string"
 ;  (set-buffer (get-vstudio-buffer))
   (cmd-vstudio (concat "cmd_output_console" " " pid))
   )
 
-(defun start-debug-vstudio-proj (pid)
-  "solution debug"
-  (cmd-vstudio (concat "cmd_debug" " " pid))
-  )
 
-(defun stop-debug-vstudio-proj (pid)
-  "solution debug stop"
-  (cmd-vstudio (concat "cmd_debug_stop" " " pid))
-  )
 
-(defun run-vstudio-proj (pid)
-  "solution no debug"
-  (cmd-vstudio (concat "cmd_run" " " pid))
-  )
 
-(defun vstudio-proj-file-list (pid)
-  "solution debug stop"
-  (cmd-vstudio (concat "cmd_project_file_list" " " pid))
-  )
+
 
 
 (defun open-vsproj ()
@@ -254,79 +212,284 @@
 (defun string-current-vstudio-output-console ()
   "output string"
   (interactive)
-  (string-vstudio-output-console current-vstudio-proj-pid)
+  (string-vstudio-pid-output-console current-vstudio-proj-pid)
   )
 
-(defun vstudio-current-output-console ()
-  "output string"
-  (interactive)
-  (setq buf (get-buffer-create "*compile*"))
-     (setq timer-temp-vs
-	   (run-with-timer 1 1
-			   (lambda ()
-			     (with-output-to-temp-buffer "*compile*"
-			       (princ (string-current-vstudio-output-console))
-			       )
-			     )
-			   )
-	   )
-     (while (eq 1 (vstudio-proj-check-for-build current-vstudio-proj-pid))
-       (sit-for 1)
-       )
-     (cancel-timer timer-temp-vs)
-     (princ (string-current-vstudio-output-console))
-  )
-
-;; compile
 ;;
+;; don't use.
+;;
+;;(defun vstudio-current-output-console ()
+;;  "output string"
+;;  (interactive)
+;;   (setq buf (get-buffer-create "*compilation*"))
+;;      (setq timer-temp-vs
+;; 	   (run-with-timer 1 1
+;; 			   (lambda ()
+;; 			     (with-output-to-temp-buffer "*compilation*"
+;; 			       (princ (string-current-vstudio-output-console))
+;; 			       )
+;; 			     )
+;; 			   )
+;; 	   )
+;;      (while (eq 1 (vstudio-proj-check-for-build current-vstudio-proj-pid))
+;;        (sit-for 1)
+;;        )
+;;      (cancel-timer timer-temp-vs)
+;;      (princ (string-current-vstudio-output-console))
+;;  )
+
+
+
+
+;;
+;; compile
+;; 
+(defun compile-vstudio-file (filename)
+  "compile source code vc-compiler"
+    (cmd-vstudio (concat "cmd_te_file_compile" " " (replace-file-path-space filename) " " "True" " " "True"))
+  )
+
 (defun vstudio-compile ()
   "visual studio compile solution current file"
   (interactive)
   (compile-vstudio-file (buffer-file-name))
   )
 
+(defun vstudio-pid-openfile-compile ()
+  "visual studio compile solution current file"
+  (interactive)
+  (compile-vstudio-openfile current-vstudio-proj-pid buffer-file-name)
+  )
+
+;; flymake compile command string
+(defun vstudio-compile-command ()
+  "compile-command string"
+  (concat vstudio-remote-exe-name " " (replace-file-path-space "cmd_te_file_compile") " " (replace-file-path-space buffer-file-name) " " (replace-file-path-space "True") " " (replace-file-path-space "True"))
+  )
+
+
+;;
 ;; build
+;;
+(defun build-vstudio-proj (filename)
+  "solution build"
+ (with-output-to-temp-buffer "*compilation*"
+   (princ (cmd-vstudio (concat "cmd_te_solution_build" " " (replace-file-path-space filename) " " "True" " " "True")))
+   )
+ )
+
+(defun build-vstudio-pid-proj (pid)
+  "pid solution build"
+ (with-output-to-temp-buffer "*compilation*"
+   (princ (cmd-vstudio ("cmd_solution_build" " " pid)))
+   )
+ )
+
 (defun vstudio-build ()
   "visual studio build solution" 
   (interactive)
-  (build-vstudio-proj current-vstudio-proj-pid)
+  (build-vstudio-proj buffer-file-name)
   )
 
+(defun vstudio-pid-build ()
+  "visual studio build solution" 
+  (interactive)
+  (build-vstudio-pid-proj current-vstudio-proj-pid)
+  )
+
+;;
 ;; rebuild
+;;
+(defun rebuild-vstudio-proj (filename)
+  "solution rebuild"
+  (with-output-to-temp-buffer "*compilation*"
+    (princ (cmd-vstudio (concat "cmd_te_solution_rebuild" " " (replace-file-path-space filename) " " "True" " " "True")))
+    )
+  )
+
+(defun rebuild-vstudio-pid-proj (pid)
+  "pid solution rebuild"
+  (with-output-to-temp-buffer "*compilation*"
+    (princ (cmd-vstudio (concat "cmd_solution_rebuild" " " pid)))
+    )
+  )
+
 (defun vstudio-rebuild ()
   "visual studio rebuild solution"
   (interactive)
-  (rebuild-vstudio-proj current-vstudio-proj-pid)
- ; (vstudio-current-output-console)
+  (rebuild-vstudio-proj (buffer-file-name))
+;  (vstudio-current-output-console)
+  )
+
+(defun vstudio-pid-rebuild ()
+  "visual studio rebuild pid solution"
+  (interactive)
+  (rebuild-vstudio-pid-proj current-vstudio-proj-pid)
+  )
+
+;;
+;; clean
+;;
+(defun clean-vstudio-proj (filename)
+  "solution clean"
+  (cmd-vstudio (concat "cmd_te_solution_clear" " " (replace-file-path-space filename)))
+  )
+
+(defun clean-vstudio-pid-proj (pid)
+  "solution clean"
+  (cmd-vstudio (concat "cmd_solution_clean" " " pid))
   )
 
 (defun vstudio-clean ()
   "visual studio clean solution"
   (interactive)
-  (clean-vstudio-proj current-vstudio-proj-pid)
+  (clean-vstudio-proj (buffer-file-name))
   )
 
+(defun vstudio-pid-clean ()
+  "visual studio clean pid solution"
+  (interactive)
+  (clean-vstudio-pid-proj current-vstudio-proj-pid)
+  )
+
+;;
 ;; debug
+;;
+(defun start-debug-vstudio-pid-proj (pid)
+  "solution debug"
+  (cmd-vstudio (concat "cmd_debug" " " pid))
+  )
+
+(defun start-debug-vstudio-proj (filename)
+  "solution debug"
+  (cmd-vstudio (concat "cmd_te_debug" " " (replace-file-path-space filename)))
+  )
+
 (defun vstudio-debug ()
   "visual studio debug solution"
   (interactive)
-  (start-debug-vstudio-proj current-vstudio-proj-pid)
+  (start-debug-vstudio-proj (buffer-file-name))
+  )
+
+(defun vstudio-pid-debug ()
+  "visual studio debug pid solution"
+  (interactive)
+  (start-debug-vstudio-pid-proj current-vstudio-proj-pid)
+  )
+
+;;
+;; stop
+;;
+(defun stop-debug-vstudio-pid-proj (pid)
+  "solution debug stop"
+  (cmd-vstudio (concat "cmd_debug_stop" " " pid))
+  )
+
+(defun stop-debug-vstudio-proj (filename)
+  "solution debug stop"
+  (cmd-vstudio (concat "cmd_te_debug_stop" " " (replace-file-path-space filename)))
+  )
+
+(defun vstudio-stop ()
+  "visual studio stop debug solution"
+  (interactive)
+  (stop-vstudio-proj (buffer-file-name))
+  )
+
+(defun vstudio-pid-stop ()
+  "visual studio stop debug pid solution"
+  (interactive)
+  (stop-vstudio-pid-proj current-vstudio-proj-pid)
+  )
+
+;;
+;; run
+;;
+(defun run-vstudio-proj (filename)
+  "solution no debug"
+  (cmd-vstudio (concat "cmd_te_run_without_debug" " " (replace-file-path-space filename)))
+  )
+
+(defun run-vstudio-pid-proj (pid)
+  "pid solution no debug"
+  (cmd-vstudio (concat "cmd_run" " " pid))
   )
 
 (defun vstudio-run ()
   "visual studio no debug solution"
   (interactive)
-  (run-vstudio-proj current-vstudio-proj-pid)
+  (run-vstudio-proj (buffer-file-name))
+  )
+
+(defun vstudio-pid-run ()
+  "visual studio no debug solution"
+  (interactive)
+  (run-vstudio-pid-proj current-vstudio-proj-pid)
+  )
+
+;;
+;; cancel
+;;
+(defun cancel-build-vstudio-proj (filename)
+  "solution no debug"
+  (cmd-vstudio (concat "cmd_te_cancel" " " (replace-file-path-space filename)))
+  )
+
+(defun cancel-build-vstudio-pid-proj (pid)
+  "pid solution no debug"
+  (cmd-vstudio (concat "cmd_cancel" " " pid))
+  )
+
+(defun vstudio-build-cancel ()
+  "visual studio cancel build solution"
+  (interactive)
+  (cancel-build-vstudio-proj (buffer-file-name))
+  )
+
+(defun vstudio-pid-build-cancel ()
+  "visual studio cancel build solution"
+  (interactive)
+  (cancel-build-vstudio-pid-proj current-vstudio-proj-pid)
   )
 
 
-(defun vstudio-activate ()
+;;
+;; active
+;;
+(defun active-vstudio-pid-window (pid)
+  "active current pid project window"
+  (cmd-vstudio (concat "cmd_activate" " " pid))
+  )
+
+(defun active-vstudio-window-with-openfile (filename)
+  "active current pid project window with active file"
+  (cmd-vstudio (concat "cmd_te_switch" " " (replace-file-path-space filename) " "
+		       (number-to-string (line-number-at-pos)) " "
+		       (number-to-string (+ (current-column) 1)))
+	       )
+  )
+
+(defun vstudio-pid-activate ()
   "activate visual studio window"
   (interactive)
   (active-vstudio-window-pid current-vstudio-proj-pid)
   )
 
+(defun vstudio-activate-with-openfile ()
+  "activate visual studio window"
+  (interactive)
+  (active-vstudio-window-with-openfile (buffer-file-name))
+  )
 
+
+
+;;;
+;;; pid func
+;;;
+(defun vstudio-proj-pid-file-list (pid)
+  "solution debug stop"
+  (cmd-vstudio (concat "cmd_project_file_list" " " pid))
+  )
 
 (defun vstudio-project-absolute-path-list ()
   ""
@@ -352,7 +515,9 @@
 )
 
 
-
+;;
+;; select vstudio
+;;
 (defvar vstudio-mode-map (make-sparse-keymap) "vstudioのキーマップ")
 (define-key vstudio-mode-map "C-n" 'vstudio-select-current-pid-next-line)
 (define-key vstudio-mode-map (kbd "p") 'vstudio-select-current-pid-previous-line)
@@ -415,3 +580,7 @@
 
 
 (provide 'rc-vstudio)
+
+;;;
+;;; end of file
+;;;
