@@ -1,5 +1,5 @@
 ;;; Remote controll Visual Studio Manual
-;; Copyright (C) 2011 FINAP(http://finap.blog49.fc2.com/)
+;; Copyright (C) 2011-2012 FINAP(http://finap.blog49.fc2.com/)
 
 Erc-vstudio.el‚Ìg‚¢•û
 

@@ -1,11 +1,9 @@
 ;;; rc-vstudio.el -- Remote controll Visual Studio
 
-;; Copyright (C) 2011 FINAP
+;; Copyright (C) 2011-2012 FINAP
 
-;; Version: 0.1
-;; Author: FINAP(http://finap.blog49.fc2.com/)
-;;
-;; download site <https://github.com/finap/emacs-remote-vstudio>
+;; Version: 0.2
+;; Author: FINAP
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -77,7 +75,6 @@
 ;;
 ;; project file list
 ;;
-
 (defun vstudio-proj-list-pid (pid)
   "solution "
   (cmd-vstudio (concat "cmd_project_list" " " pid))
@@ -87,7 +84,6 @@
 ;;
 ;; project file list
 ;;
-
 (defun vstudio-proj-file-list-pid (pid)
   "solution "
   (cmd-vstudio (concat "cmd_project_file_list" " " pid " " (vstudio-project-absolute-path-pid pid)))
@@ -462,11 +458,14 @@
   )
 
 (defun active-vstudio-window-with-openfile (filename)
-  "active current pid project window with active file"
-  (cmd-vstudio (concat "cmd_te_switch" " " (replace-file-path-space filename) " "
-		       (number-to-string (line-number-at-pos)) " "
-		       (number-to-string (+ (current-column) 1)))
-	       )
+  "active project window with active file"
+  (let ((current-col-tab-number (buffer-substring (point-at-bol) (point))))
+    (setq current-col-tab-number (- (length (split-string current-col-tab-number "\t")) 1)) ; 1 is not tab string number
+    (cmd-vstudio (concat "cmd_te_switch" " " (replace-file-path-space filename) " "
+			 (number-to-string (line-number-at-pos)) " "
+			 (number-to-string (+ (- (current-column) (* current-col-tab-number (- tab-width 1))) 1)))
+		 )
+    )
   )
 
 (defun vstudio-pid-activate ()
