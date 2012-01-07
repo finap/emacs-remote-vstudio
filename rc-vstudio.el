@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2011-2012 FINAP
 
-;; Version: 0.2
+;; Version: 0.2a
 ;; Author: FINAP
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -252,9 +252,9 @@
   )
 
 (defun vstudio-pid-openfile-compile ()
-  "visual studio compile solution current file"
+  "visual studio compile solution current file (no wait)"
   (interactive)
-  (compile-vstudio-openfile current-vstudio-proj-pid buffer-file-name)
+   (cmd-vstudio (concat "cmd_file_compile" " " current-vstudio-proj-pid " " (replace-file-path-space buffer-file-name) " " "True"))
   )
 
 ;; flymake compile command string
@@ -277,7 +277,7 @@
 (defun build-vstudio-pid-proj (pid)
   "pid solution build"
  (with-output-to-temp-buffer "*compilation*"
-   (princ (cmd-vstudio ("cmd_solution_build" " " pid)))
+   (princ (cmd-vstudio (concat "cmd_solution_build" " " pid)))
    )
  )
 
@@ -389,13 +389,13 @@
 (defun vstudio-stop ()
   "visual studio stop debug solution"
   (interactive)
-  (stop-vstudio-proj (buffer-file-name))
+  (stop-debug-vstudio-proj (buffer-file-name))
   )
 
 (defun vstudio-pid-stop ()
   "visual studio stop debug pid solution"
   (interactive)
-  (stop-vstudio-pid-proj current-vstudio-proj-pid)
+  (stop-debug-vstudio-pid-proj current-vstudio-proj-pid)
   )
 
 ;;
@@ -471,7 +471,7 @@
 (defun vstudio-pid-activate ()
   "activate visual studio window"
   (interactive)
-  (active-vstudio-window-pid current-vstudio-proj-pid)
+  (active-vstudio-pid-window current-vstudio-proj-pid)
   )
 
 (defun vstudio-activate-with-openfile ()
